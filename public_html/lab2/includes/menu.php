@@ -3,7 +3,9 @@ $menu = [
     ["link" => "Home", "href" => "index.php"],
     ["link" => "About", "href" => "about.php"],
     ["link" => "Contact", "href" => "contact.php"],
-    ["link" => "Pagination", "href" => "pagination.php"] // <-- добавили
+    ["link" => "Pagination", "href" => "pagination.php"],
+    ["link" => "Photos", "href" => "photos.php"],
+    ["link" => "Documents", "href" => "documents.php"]
 ];
 ?>
 <div id="sticky-header" class="main-header-area">

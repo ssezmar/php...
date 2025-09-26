@@ -4,7 +4,7 @@ $pageTitle = "Pagination - Animal";
 // Подключения
 include "includes/header.php";
 include "includes/menu.php";
-include "function.php";
+require "function.php";
 
 // Данные (можно заменить на реальные из БД или массив животных)
 $data = [
