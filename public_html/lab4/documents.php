@@ -1,108 +1,62 @@
 <?php
 include "includes/header.php";
 include "includes/menu.php";
-$dir = __DIR__ . '/documents';        // физический путь для хранения файлов
-$webDir = 'documents';                // путь для URL <a href="documents/..."
-$metaFile = $dir . '/meta.json';      // файл с метаданными
-$maxFileSize = 10 * 1024 * 1024;      // 10 MB
-$allowedExt = ['pdf','doc','docx','xls','xlsx'];
-$allowedMime = [
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-];
+require_once 'FileUploader.php'; // подключаем классы
 
-$perPage = 1;
+$uploader = new DocumentUploader('uploads/documents/', 'files_data.json');
+$maxFileSize = human_filesize($uploader->maxSize ?? 20971520); // 20МБ
 
-if (!is_dir($dir)) {
-    mkdir($dir, 0755, true);
+// Сообщения для пользователя
+$msg = null;
+$msgType = 'success';
+
+// Загрузка файла
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload'])) {
+    try {
+        $uploader->uploadFile($_FILES['file'], $_POST['title']);
+        $msg = "Файл успешно загружен.";
+    } catch (Exception $e) {
+        $msg = $e->getMessage();
+        $msgType = 'danger';
+    }
 }
 
-$meta = [];
-if (file_exists($metaFile)) {
-    $json = file_get_contents($metaFile);
-    $meta = json_decode($json, true) ?: [];
+// Удаление файла
+if (isset($_GET['delete'])) {
+    try {
+        $uploader->deleteFile($_GET['delete']);
+        $msg = "Файл удалён.";
+    } catch (Exception $e) {
+        $msg = $e->getMessage();
+        $msgType = 'danger';
+    }
 }
 
+$docs = array_filter($uploader->getAllFiles(), function($f) {
+    return $f['class_type'] === 'DocumentUploader';
+});
+
+usort($docs, function($a, $b) {
+    return strtotime($b['upload_date']) - strtotime($a['upload_date']);
+});
+// Пагинация
+$perPage = 5;
+$total = count($docs);
+$totalPages = ($total === 0) ? 1 : (int)ceil($total / $perPage);
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$page = min($page, $totalPages);
+$offset = ($page - 1) * $perPage;
+$pageDocs = array_slice($docs, $offset, $perPage);
+
+// Функция для красоты размера файла
 function human_filesize($bytes, $dec = 2) {
-    $sizes = ['B','KB','MB'];
+    $sizes = ['B','KB','MB','GB'];
     if ($bytes == 0) return '0 B';
     $factor = floor((strlen($bytes) - 1) / 3);
     return sprintf("%.{$dec}f", $bytes / pow(1024, $factor)) . ' ' . $sizes[$factor];
 }
 
-$msg = null;
-$msgType = 'success';
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload'])) {
-    if (!isset($_FILES['file'])) {
-        $msg = "Файл не выбран.";
-        $msgType = 'danger';
-    } else {
-        $f = $_FILES['file'];
-        if ($f['error'] !== UPLOAD_ERR_OK) {
-            $msg = "Ошибка загрузки файла (код: {$f['error']}).";
-            $msgType = 'danger';
-        } elseif ($f['size'] > $maxFileSize) {
-            $msg = "Файл превышает допустимый размер " . human_filesize($maxFileSize) . ".";
-            $msgType = 'danger';
-        } else {
-            $origName = $f['name'];
-            $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
-            if (!in_array($ext, $allowedExt)) {
-                $msg = "Недопустимое расширение. Разрешены: " . implode(', ', $allowedExt) . ".";
-                $msgType = 'danger';
-            } else {
-                // Проверка MIME через finfo
-                $finfo = new finfo(FILEINFO_MIME_TYPE);
-                $mime = $finfo->file($f['tmp_name']);
-                if (!in_array($mime, $allowedMime)) {
-                    $msg = "Недопустимый тип файла (MIME: {$mime}).";
-                    $msgType = 'danger';
-                } else {
-                    // Генерируем уникальное имя для хранения
-                    $storedName = time() . '-' . bin2hex(random_bytes(6)) . '.' . $ext;
-                    $dest = $dir . '/' . $storedName;
-                    if (!move_uploaded_file($f['tmp_name'], $dest)) {
-                        $msg = "Не удалось сохранить файл на сервере.";
-                        $msgType = 'danger';
-                    } else {
-                        $title = trim($_POST['title'] ?? '');
-                        if ($title === '') $title = $origName;
-                        $entry = [
-                            'title' => $title,
-                            'original_name' => $origName,
-                            'stored_name' => $storedName,
-                            'size' => filesize($dest),
-                            'mime' => $mime,
-                            'time' => time()
-                        ];
-                        $meta[$storedName] = $entry;
-                        // сохраняем JSON (блокировка)
-                        file_put_contents($metaFile, json_encode($meta, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE), LOCK_EX);
-                        $msg = "Файл успешно загружен.";
-                        $msgType = 'success';
-                    }
-                }
-            }
-        }
-    }
-}
-
-$docs = array_values($meta);
-usort($docs, function($a, $b){ return $b['time'] - $a['time']; });
-
-// Пагинация: вычислим текущую страницу и страницы в цел
-$total = count($docs);
-$totalPages = ($total === 0) ? 1 : (int)ceil($total / $perPage);
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-if ($page < 1) $page = 1;
-if ($page > $totalPages) $page = $totalPages;
-$offset = ($page - 1) * $perPage;
-$pageDocs = array_slice($docs, $offset, $perPage);
-
-// Вспомогательная функция для генерации URL с сохранением других GET-параметров
+// Вспомогательная функция для URL
 function page_url($p) {
     $qs = $_GET;
     $qs['page'] = $p;
@@ -114,9 +68,8 @@ function page_url($p) {
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <title>Документы — AniPat</title>
+  <title>Документы</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <!-- Bootstrap CSS (CDN) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 </head>
 <body>
@@ -124,97 +77,54 @@ function page_url($p) {
   <h1 class="mb-4">Документы</h1>
 
   <?php if ($msg): ?>
-    <div class="alert alert-<?php echo ($msgType); ?>"><?php echo ($msg); ?></div>
+    <div class="alert alert-<?php echo $msgType; ?>"><?php echo htmlspecialchars($msg); ?></div>
   <?php endif; ?>
 
   <div class="card mb-4">
     <div class="card-body">
-      <form action="documents.php" method="post" enctype="multipart/form-data" class="form-inline">
+      <form method="post" enctype="multipart/form-data" class="form-inline">
         <div class="form-group mb-2 mr-2">
-          <label class="sr-only" for="file">Файл</label>
-          <input type="file" class="form-control-file" id="file" name="file" required>
+          <input type="file" class="form-control-file" name="file" required>
         </div>
         <div class="form-group mb-2 mr-2">
-          <label class="sr-only" for="title">Краткое название</label>
-          <input type="text" class="form-control" id="title" name="title" placeholder="Краткое название" required>
+          <input type="text" class="form-control" name="title" placeholder="Комментарий" required>
         </div>
         <button type="submit" name="upload" class="btn btn-primary mb-2">Загрузить</button>
       </form>
-      <small class="form-text text-muted">Разрешённые форматы: .doc, .docx, .xls, .xlsx, .pdf. Макс. размер: <?php echo human_filesize($maxFileSize); ?>.</small>
+      <small class="form-text text-muted">
+        Разрешённые форматы: <?php echo implode(', ', $uploader->allowedTypes ?? []); ?>.
+        Макс. размер: <?php echo $maxFileSize; ?>.
+      </small>
     </div>
   </div>
 
   <?php if (empty($docs)): ?>
-    <p class="text-muted">Пока нет загруженных документов.</p>
+    <p class="text-muted">Нет загруженных документов.</p>
   <?php else: ?>
-    <div class="table-responsive">
-      <table class="table table-sm table-bordered">
-        <thead class="thead-light">
-          <tr>
-            <th>Название</th>
-            <th>Оригинальное имя</th>
-            <th>Размер</th>
-            <th>Дата загрузки</th>
-            <th>Действие</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($pageDocs as $d): ?>
-            <tr>
-              <td><?php echo ($d['title']); ?></td>
-              <td><?php echo ($d['original_name']); ?></td>
-              <td><?php echo human_filesize($d['size']); ?></td>
-              <td><?php echo date("d.m.Y H:i:s", $d['time']); ?></td>
-              <td>
-                <a href="<?php echo ($webDir . '/' . $d['stored_name']); ?>" target="_blank" class="btn btn-sm btn-outline-primary">Просмотреть / Скачать</a>
-              </td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
+    <div class="row">
+      <?php foreach ($pageDocs as $file): ?>
+        <?php echo $uploader->generateCard($file); ?>
+      <?php endforeach; ?>
     </div>
 
     <!-- Пагинация -->
     <?php if ($totalPages > 1): ?>
       <nav aria-label="Documents pagination">
         <ul class="pagination">
-          <li class="page-item <?php if ($page <= 1) echo 'disabled'; ?>">
-            <a class="page-link" href="<?php echo (page_url(max(1, $page-1))); ?>" aria-label="Previous">
-              &laquo;
-            </a>
+          <li class="page-item <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
+            <a class="page-link" href="<?php echo page_url(max(1, $page-1)); ?>">&laquo;</a>
           </li>
-
-          <?php
-          $start = max(1, $page - 2);
-          $end = min($totalPages, $page + 2);
-          if ($start > 1) {
-              echo '<li class="page-item"><a class="page-link" href="'.(page_url(1)).'">1</a></li>';
-              if ($start > 2) {
-                  echo '<li class="page-item disabled"><span class="page-link">…</span></li>';
-              }
-          }
-          for ($i = $start; $i <= $end; $i++): ?>
-            <li class="page-item <?php if ($i == $page) echo 'active'; ?>">
-              <a class="page-link" href="<?php echo (page_url($i)); ?>"><?php echo $i; ?></a>
+          <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+            <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
+              <a class="page-link" href="<?php echo page_url($i); ?>"><?php echo $i; ?></a>
             </li>
-          <?php endfor;
-          if ($end < $totalPages) {
-              if ($end < $totalPages - 1) {
-                  echo '<li class="page-item disabled"><span class="page-link">…</span></li>';
-              }
-              echo '<li class="page-item"><a class="page-link" href="'.(page_url($totalPages)).'">'. $totalPages .'</a></li>';
-          }
-          ?>
-
-          <li class="page-item <?php if ($page >= $totalPages) echo 'disabled'; ?>">
-            <a class="page-link" href="<?php echo (page_url(min($totalPages, $page+1))); ?>" aria-label="Next">
-              &raquo;
-            </a>
+          <?php endfor; ?>
+          <li class="page-item <?php echo ($page >= $totalPages) ? 'disabled' : ''; ?>">
+            <a class="page-link" href="<?php echo page_url(min($totalPages, $page+1)); ?>">&raquo;</a>
           </li>
         </ul>
       </nav>
     <?php endif; ?>
-
   <?php endif; ?>
 </div>
 
