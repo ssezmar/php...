@@ -1,18 +1,28 @@
 <?php
-// Настройки подключения к базе данных
-define('DB_SERVER', 'localhost');
-define('DB_USERNAME', 'root');
-define('DB_PASSWORD', '');
-define('DB_NAME', 'students_db');
+// config/database.php
 
-// Создаем подключение
-$connection = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
+// Читаем переменные окружения
+$dbHost     = getenv('MYSQL_HOST')     ?: 'mysql';
+$dbPort     = getenv('MYSQL_PORT')     ?: '3306';
+$dbName     = getenv('DB_NAME')        ?: 'dbtest';
+$dbUser     = getenv('DB_USERNAME')    ?: 'otherUser';
+$dbPassword = getenv('DB_PASSWORD')    ?: 'password';
 
-// Проверяем подключение
-if (!$connection) {
-    die("Ошибка подключения: " . mysqli_connect_error());
+// Устанавливаем соединение
+$connection = mysqli_init();
+mysqli_options($connection, MYSQLI_OPT_INT_AND_FLOAT_NATIVE, 1);
+$connected = mysqli_real_connect(
+    $connection,
+    $dbHost,
+    $dbUser,
+    $dbPassword,
+    $dbName,
+    (int)$dbPort
+);
+
+if (!$connected) {
+    die('Ошибка подключения к БД: ' . mysqli_connect_error());
 }
 
-// Устанавливаем кодировку
-mysqli_set_charset($connection, "utf8");
-?>
+// Кодировка UTF-8
+mysqli_set_charset($connection, 'utf8mb4');
