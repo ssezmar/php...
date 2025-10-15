@@ -1,3 +1,10 @@
+<nav class="nav">
+  <a class="nav-link" href="add_subject.php">Добавить предмет</a>
+  <a class="nav-link" href="enroll.php">Записать на предмет</a>
+  <a class="nav-link" href="list_by_subject.php">Список по предмету</a>
+  <a class="nav-link" href="load_students.php">Загрузить списком</a>
+</nav>
+
 <?php
 require_once 'config/database.php';
 require_once 'includes/functions.php';
