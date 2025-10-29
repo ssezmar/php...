@@ -1,4 +1,6 @@
 <?php
+// index.php - Главный файл с роутингом
+
 // Загрузка конфигурации
 require_once 'config/database.php';
 
@@ -7,6 +9,7 @@ require_once 'models/Database.php';
 require_once 'models/Product.php';
 require_once 'models/Customer.php';
 require_once 'models/Order.php';
+require_once 'models/Review.php';
 
 // Загрузка контроллеров
 require_once 'controllers/Controller.php';
@@ -18,26 +21,41 @@ require_once 'controllers/OrderController.php';
 $database = new Database();
 $db = $database->getConnection();
 
-// Определение страницы
+// Определение страницы и действия
 $page = isset($_GET['page']) ? $_GET['page'] : 'products';
+$action = isset($_GET['action']) ? $_GET['action'] : 'index';
 
 // Роутинг
 switch ($page) {
     case 'products':
         $controller = new ProductController($db);
-        $controller->index();
+        if ($action === 'edit' && method_exists($controller, 'edit')) {
+            $controller->edit();
+        } elseif ($action === 'view' && method_exists($controller, 'viewProduct')) {
+            $controller->viewProduct();  // ✅ ИСПРАВЛЕНО: вызов viewProduct()
+        } else {
+            $controller->index();
+        }
         break;
-        
+
     case 'customers':
         $controller = new CustomerController($db);
-        $controller->index();
+        if ($action === 'edit' && method_exists($controller, 'edit')) {
+            $controller->edit();
+        } else {
+            $controller->index();
+        }
         break;
-        
+
     case 'orders':
         $controller = new OrderController($db);
-        $controller->index();
+        if ($action === 'edit' && method_exists($controller, 'edit')) {
+            $controller->edit();
+        } else {
+            $controller->index();
+        }
         break;
-        
+
     default:
         $controller = new ProductController($db);
         $controller->index();
