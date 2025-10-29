@@ -1,4 +1,5 @@
 <?php
+// models/Order.php
 class Order {
     private $conn;
     private $table_name = "orders";
@@ -14,57 +15,88 @@ class Order {
         $this->conn = $db;
     }
 
+    // Получить все заказы с информацией о покупателях и товарах
     public function read() {
-        $query = "SELECT o.*, c.name as customer_name, p.name as product_name, p.price as product_price
+        $query = "SELECT o.*, c.name as customer_name, p.name as product_name, p.price
                   FROM " . $this->table_name . " o
                   LEFT JOIN customers c ON o.customer_id = c.id
                   LEFT JOIN products p ON o.product_id = p.id
                   ORDER BY o.order_date DESC";
         $result = $this->conn->query($query);
-        return $result;
-    }
 
-    public function create() {
-        // Получаем цену товара
-        $product_query = "SELECT price FROM products WHERE id = ?";
-        $stmt = $this->conn->prepare($product_query);
-        $stmt->bind_param("i", $this->product_id);
-        $stmt->execute();
-        $product = $stmt->get_result()->fetch_assoc();
-        
-        if (!$product) {
+        if ($result === false) {
+            echo "Ошибка SQL в Order::read(): " . $this->conn->error . "<br>";
+            echo "Запрос: " . $query . "<br>";
             return false;
         }
 
-        // Рассчитываем общую сумму
-        $this->total = $product['price'] * $this->quantity;
+        return $result;
+    }
 
-        $query = "INSERT INTO " . $this->table_name . " 
-                  SET customer_id=?, product_id=?, quantity=?, total=?";
-        
+    // Получить заказ по ID
+    public function getById($id) {
+        $query = "SELECT o.*, c.name as customer_name, p.name as product_name 
+                  FROM " . $this->table_name . " o
+                  LEFT JOIN customers c ON o.customer_id = c.id
+                  LEFT JOIN products p ON o.product_id = p.id
+                  WHERE o.id = ?";
         $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            echo "Ошибка подготовки запроса: " . $this->conn->error;
+            return false;
+        }
+
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    // Создать заказ
+    public function create() {
+        $query = "INSERT INTO " . $this->table_name . " 
+                  (customer_id, product_id, quantity, total) 
+                  VALUES (?, ?, ?, ?)";
+        $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            echo "Ошибка подготовки запроса: " . $this->conn->error;
+            return false;
+        }
+
         $stmt->bind_param("iiid", $this->customer_id, $this->product_id, $this->quantity, $this->total);
-        
         return $stmt->execute();
     }
 
+    // Обновить заказ
+    public function update() {
+        $query = "UPDATE " . $this->table_name . " 
+                  SET customer_id=?, product_id=?, quantity=?, total=? 
+                  WHERE id=?";
+        $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            echo "Ошибка подготовки запроса: " . $this->conn->error;
+            return false;
+        }
+
+        $stmt->bind_param("iiidi", $this->customer_id, $this->product_id, $this->quantity, $this->total, $this->id);
+        return $stmt->execute();
+    }
+
+    // Удалить заказ
     public function delete() {
         $query = "DELETE FROM " . $this->table_name . " WHERE id = ?";
         $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            echo "Ошибка подготовки запроса: " . $this->conn->error;
+            return false;
+        }
+
         $stmt->bind_param("i", $this->id);
         return $stmt->execute();
-    }
-
-    public function getCustomers() {
-        $query = "SELECT id, name FROM customers ORDER BY name";
-        $result = $this->conn->query($query);
-        return $result;
-    }
-
-    public function getProducts() {
-        $query = "SELECT id, name, price FROM products ORDER BY name";
-        $result = $this->conn->query($query);
-        return $result;
     }
 }
 ?>
