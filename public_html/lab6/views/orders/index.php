@@ -17,40 +17,47 @@ include 'views/header.php';
                 <h5 class="mb-0">📋 Список заказов</h5>
             </div>
             <div class="card-body">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Покупатель</th>
-                            <th>Товар</th>
-                            <th>Количество</th>
-                            <th>Сумма</th>
-                            <th>Дата</th>
-                            <th>Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while ($order = $orders->fetch_assoc()): ?>
-                        <tr>
-                            <td><?php echo $order['id']; ?></td>
-                            <td><?php echo htmlspecialchars($order['customer_name']); ?></td>
-                            <td><?php echo htmlspecialchars($order['product_name']); ?></td>
-                            <td><?php echo $order['quantity']; ?></td>
-                            <td><?php echo number_format($order['total'], 2); ?> ₽</td>
-                            <td><?php echo date('d.m.Y H:i', strtotime($order['order_date'])); ?></td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="?page=orders&action=edit&id=<?php echo $order['id']; ?>" 
-                                       class="btn btn-warning">✏️ Изменить</a>
-                                    <a href="?page=orders&delete_id=<?php echo $order['id']; ?>" 
-                                       class="btn btn-danger" 
-                                       onclick="return confirm('Удалить этот заказ?')">🗑️ Удалить</a>
-                                </div>
-                            </td>
-                        </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
+                <?php if ($orders && $orders->num_rows > 0): ?>
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Покупатель</th>
+                                <th>Товар</th>
+                                <th>Количество</th>
+                                <th>Сумма</th>
+                                <th>Дата</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while ($order = $orders->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo $order['id']; ?></td>
+                                <td><?php echo htmlspecialchars($order['customer_name']); ?></td>
+                                <td><?php echo htmlspecialchars($order['product_name']); ?></td>
+                                <td><?php echo $order['quantity']; ?></td>
+                                <td><?php echo number_format($order['total'], 2); ?> ₽</td>
+                                <td><?php echo date('d.m.Y H:i', strtotime($order['order_date'])); ?></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="?page=orders&action=edit&id=<?php echo $order['id']; ?>" 
+                                           class="btn btn-warning">✏️ Изменить</a>
+                                        <a href="?page=orders&delete_id=<?php echo $order['id']; ?>" 
+                                           class="btn btn-danger" 
+                                           onclick="return confirm('Удалить этот заказ?')">🗑️ Удалить</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Заказы не найдены!</strong><br>
+                        Возможно таблица пуста или возникла ошибка при подключении к БД.
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -69,13 +76,17 @@ include 'views/header.php';
                         <select name="customer_id" class="form-select" required>
                             <option value="">Выберите покупателя</option>
                             <?php 
-                            $customers->data_seek(0);
-                            while ($customer = $customers->fetch_assoc()): 
+                            if ($customers && $customers->num_rows > 0) {
+                                $customers->data_seek(0);
+                                while ($customer = $customers->fetch_assoc()): 
                             ?>
                                 <option value="<?php echo $customer['id']; ?>">
                                     <?php echo htmlspecialchars($customer['name']); ?>
                                 </option>
-                            <?php endwhile; ?>
+                            <?php 
+                                endwhile;
+                            }
+                            ?>
                         </select>
                     </div>
 
@@ -84,15 +95,19 @@ include 'views/header.php';
                         <select name="product_id" class="form-select" id="product_select" required>
                             <option value="">Выберите товар</option>
                             <?php 
-                            $products->data_seek(0);
-                            while ($product = $products->fetch_assoc()): 
+                            if ($products && $products->num_rows > 0) {
+                                $products->data_seek(0);
+                                while ($product = $products->fetch_assoc()): 
                             ?>
                                 <option value="<?php echo $product['id']; ?>" 
                                         data-price="<?php echo $product['price']; ?>">
                                     <?php echo htmlspecialchars($product['name']); ?> - 
                                     <?php echo number_format($product['price'], 2); ?> ₽
                                 </option>
-                            <?php endwhile; ?>
+                            <?php 
+                                endwhile;
+                            }
+                            ?>
                         </select>
                     </div>
 

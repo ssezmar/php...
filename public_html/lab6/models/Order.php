@@ -23,6 +23,13 @@ class Order {
                   LEFT JOIN products p ON o.product_id = p.id
                   ORDER BY o.order_date DESC";
         $result = $this->conn->query($query);
+
+        if ($result === false) {
+            echo "Ошибка SQL в Order::read(): " . $this->conn->error . "<br>";
+            echo "Запрос: " . $query . "<br>";
+            return false;
+        }
+
         return $result;
     }
 
@@ -34,6 +41,12 @@ class Order {
                   LEFT JOIN products p ON o.product_id = p.id
                   WHERE o.id = ?";
         $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            echo "Ошибка подготовки запроса: " . $this->conn->error;
+            return false;
+        }
+
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -46,6 +59,12 @@ class Order {
                   (customer_id, product_id, quantity, total) 
                   VALUES (?, ?, ?, ?)";
         $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            echo "Ошибка подготовки запроса: " . $this->conn->error;
+            return false;
+        }
+
         $stmt->bind_param("iiid", $this->customer_id, $this->product_id, $this->quantity, $this->total);
         return $stmt->execute();
     }
@@ -56,6 +75,12 @@ class Order {
                   SET customer_id=?, product_id=?, quantity=?, total=? 
                   WHERE id=?";
         $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            echo "Ошибка подготовки запроса: " . $this->conn->error;
+            return false;
+        }
+
         $stmt->bind_param("iiidi", $this->customer_id, $this->product_id, $this->quantity, $this->total, $this->id);
         return $stmt->execute();
     }
@@ -64,6 +89,12 @@ class Order {
     public function delete() {
         $query = "DELETE FROM " . $this->table_name . " WHERE id = ?";
         $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            echo "Ошибка подготовки запроса: " . $this->conn->error;
+            return false;
+        }
+
         $stmt->bind_param("i", $this->id);
         return $stmt->execute();
     }

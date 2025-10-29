@@ -17,36 +17,43 @@ include 'views/header.php';
                 <h5 class="mb-0">📦 Список товаров</h5>
             </div>
             <div class="card-body">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Название</th>
-                            <th>Цена</th>
-                            <th>Описание</th>
-                            <th>Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while ($product = $products->fetch_assoc()): ?>
-                        <tr>
-                            <td><?php echo $product['id']; ?></td>
-                            <td><?php echo htmlspecialchars($product['name']); ?></td>
-                            <td><?php echo number_format($product['price'], 2); ?> ₽</td>
-                            <td><?php echo htmlspecialchars($product['description']); ?></td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="?page=products&action=edit&id=<?php echo $product['id']; ?>" 
-                                       class="btn btn-warning">✏️ Изменить</a>
-                                    <a href="?page=products&delete_id=<?php echo $product['id']; ?>" 
-                                       class="btn btn-danger" 
-                                       onclick="return confirm('Удалить этот товар?')">🗑️ Удалить</a>
-                                </div>
-                            </td>
-                        </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
+                <?php if ($products && $products->num_rows > 0): ?>
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Название</th>
+                                <th>Цена</th>
+                                <th>Описание</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while ($product = $products->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo $product['id']; ?></td>
+                                <td><?php echo htmlspecialchars($product['name']); ?></td>
+                                <td><?php echo number_format($product['price'], 2); ?> ₽</td>
+                                <td><?php echo htmlspecialchars($product['description']); ?></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="?page=products&action=edit&id=<?php echo $product['id']; ?>" 
+                                           class="btn btn-warning">✏️ Изменить</a>
+                                        <a href="?page=products&delete_id=<?php echo $product['id']; ?>" 
+                                           class="btn btn-danger" 
+                                           onclick="return confirm('Удалить этот товар?')">🗑️ Удалить</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Товары не найдены!</strong><br>
+                        Возможно таблица пуста или возникла ошибка при подключении к БД.
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

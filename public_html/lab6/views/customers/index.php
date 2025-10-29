@@ -17,36 +17,43 @@ include 'views/header.php';
                 <h5 class="mb-0">👥 Список покупателей</h5>
             </div>
             <div class="card-body">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Имя</th>
-                            <th>Email</th>
-                            <th>Телефон</th>
-                            <th>Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while ($customer = $customers->fetch_assoc()): ?>
-                        <tr>
-                            <td><?php echo $customer['id']; ?></td>
-                            <td><?php echo htmlspecialchars($customer['name']); ?></td>
-                            <td><?php echo htmlspecialchars($customer['email']); ?></td>
-                            <td><?php echo htmlspecialchars($customer['phone']); ?></td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="?page=customers&action=edit&id=<?php echo $customer['id']; ?>" 
-                                       class="btn btn-warning">✏️ Изменить</a>
-                                    <a href="?page=customers&delete_id=<?php echo $customer['id']; ?>" 
-                                       class="btn btn-danger" 
-                                       onclick="return confirm('Удалить этого покупателя?')">🗑️ Удалить</a>
-                                </div>
-                            </td>
-                        </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
+                <?php if ($customers && $customers->num_rows > 0): ?>
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Имя</th>
+                                <th>Email</th>
+                                <th>Телефон</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while ($customer = $customers->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo $customer['id']; ?></td>
+                                <td><?php echo htmlspecialchars($customer['name']); ?></td>
+                                <td><?php echo htmlspecialchars($customer['email']); ?></td>
+                                <td><?php echo htmlspecialchars($customer['phone']); ?></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="?page=customers&action=edit&id=<?php echo $customer['id']; ?>" 
+                                           class="btn btn-warning">✏️ Изменить</a>
+                                        <a href="?page=customers&delete_id=<?php echo $customer['id']; ?>" 
+                                           class="btn btn-danger" 
+                                           onclick="return confirm('Удалить этого покупателя?')">🗑️ Удалить</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Покупатели не найдены!</strong><br>
+                        Возможно таблица пуста или возникла ошибка при подключении к БД.
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

@@ -18,6 +18,13 @@ class Customer {
     public function read() {
         $query = "SELECT * FROM " . $this->table_name . " ORDER BY created_at DESC";
         $result = $this->conn->query($query);
+
+        if ($result === false) {
+            echo "Ошибка SQL в Customer::read(): " . $this->conn->error . "<br>";
+            echo "Запрос: " . $query . "<br>";
+            return false;
+        }
+
         return $result;
     }
 
@@ -25,6 +32,12 @@ class Customer {
     public function getById($id) {
         $query = "SELECT * FROM " . $this->table_name . " WHERE id = ?";
         $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            echo "Ошибка подготовки запроса: " . $this->conn->error;
+            return false;
+        }
+
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -37,6 +50,12 @@ class Customer {
                   (name, email, phone) 
                   VALUES (?, ?, ?)";
         $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            echo "Ошибка подготовки запроса: " . $this->conn->error;
+            return false;
+        }
+
         $stmt->bind_param("sss", $this->name, $this->email, $this->phone);
         return $stmt->execute();
     }
@@ -47,6 +66,12 @@ class Customer {
                   SET name=?, email=?, phone=? 
                   WHERE id=?";
         $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            echo "Ошибка подготовки запроса: " . $this->conn->error;
+            return false;
+        }
+
         $stmt->bind_param("sssi", $this->name, $this->email, $this->phone, $this->id);
         return $stmt->execute();
     }
@@ -55,6 +80,12 @@ class Customer {
     public function delete() {
         $query = "DELETE FROM " . $this->table_name . " WHERE id = ?";
         $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            echo "Ошибка подготовки запроса: " . $this->conn->error;
+            return false;
+        }
+
         $stmt->bind_param("i", $this->id);
         return $stmt->execute();
     }
