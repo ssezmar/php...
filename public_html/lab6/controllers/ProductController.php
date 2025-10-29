@@ -2,10 +2,12 @@
 // controllers/ProductController.php
 class ProductController extends Controller {
     private $productModel;
+    private $reviewModel;
 
     public function __construct($database) {
         parent::__construct($database);
         $this->productModel = new Product($this->db);
+        $this->reviewModel = new Review($this->db);
     }
 
     public function index() {
@@ -66,6 +68,55 @@ class ProductController extends Controller {
 
         $this->view('products/edit', [
             'product' => $product
+        ]);
+    }
+
+    // ✅ ИСПРАВЛЕНО: переименован метод на viewProduct()
+    public function viewProduct() {
+        $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $product = $this->productModel->getById($id);
+
+        if (!$product) {
+            $this->redirect('products');
+        }
+
+        $message = '';
+
+        // Добавление отзыва
+        if ($_POST && isset($_POST['add_review'])) {
+            $this->reviewModel->product_id = $id;
+            $this->reviewModel->customer_id = $_POST['customer_id'];
+            $this->reviewModel->rating = $_POST['rating'];
+            $this->reviewModel->comment = $_POST['comment'];
+
+            if ($this->reviewModel->create()) {
+                $message = "Отзыв успешно добавлен!";
+            } else {
+                $message = "Ошибка при добавлении отзыва!";
+            }
+        }
+
+        // Удаление отзыва
+        if (isset($_GET['delete_review'])) {
+            $this->reviewModel->id = $_GET['delete_review'];
+            if ($this->reviewModel->delete()) {
+                $message = "Отзыв удален!";
+            }
+        }
+
+        $reviews = $this->reviewModel->getByProductId($id);
+        $rating_info = $this->reviewModel->getAverageRating($id);
+
+        // Получаем список покупателей для формы отзыва
+        $customerModel = new Customer($this->db);
+        $customers = $customerModel->read();
+
+        $this->view('products/view', [
+            'product' => $product,
+            'reviews' => $reviews,
+            'rating_info' => $rating_info,
+            'customers' => $customers,
+            'message' => $message
         ]);
     }
 }

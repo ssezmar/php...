@@ -45,3 +45,23 @@ INSERT INTO customers (name, email, phone) VALUES
 ('Иван Иванов', 'ivan@mail.ru', '+7-999-123-45-67'),
 ('Мария Петрова', 'maria@yandex.ru', '+7-999-765-43-21'),
 ('Петр Сидоров', 'petr@gmail.com', '+7-999-555-44-33');
+
+-- Создание таблицы отзывов
+CREATE TABLE IF NOT EXISTS reviews (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    customer_id INT NOT NULL,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Вставка тестовых отзывов (если есть товары и покупатели)
+INSERT INTO reviews (product_id, customer_id, rating, comment) VALUES
+(1, 1, 5, 'Отличный товар! Очень доволен покупкой.'),
+(1, 2, 4, 'Хорошее качество, но цена высоковата.'),
+(2, 3, 5, 'Прекрасная мышь, работает отлично!'),
+(3, 1, 3, 'Нормальная клавиатура, но ожидал большего.');
+

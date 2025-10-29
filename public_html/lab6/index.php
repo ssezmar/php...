@@ -9,6 +9,7 @@ require_once 'models/Database.php';
 require_once 'models/Product.php';
 require_once 'models/Customer.php';
 require_once 'models/Order.php';
+require_once 'models/Review.php';
 
 // Загрузка контроллеров
 require_once 'controllers/Controller.php';
@@ -30,6 +31,8 @@ switch ($page) {
         $controller = new ProductController($db);
         if ($action === 'edit' && method_exists($controller, 'edit')) {
             $controller->edit();
+        } elseif ($action === 'view' && method_exists($controller, 'viewProduct')) {
+            $controller->viewProduct();  // ✅ ИСПРАВЛЕНО: вызов viewProduct()
         } else {
             $controller->index();
         }

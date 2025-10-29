@@ -37,6 +37,8 @@ include 'views/header.php';
                                 <td><?php echo htmlspecialchars($product['description']); ?></td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
+                                        <a href="?page=products&action=view&id=<?php echo $product['id']; ?>" 
+                                           class="btn btn-info">👁️ Просмотр</a>
                                         <a href="?page=products&action=edit&id=<?php echo $product['id']; ?>" 
                                            class="btn btn-warning">✏️ Изменить</a>
                                         <a href="?page=products&delete_id=<?php echo $product['id']; ?>" 
