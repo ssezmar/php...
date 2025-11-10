@@ -1,24 +1,45 @@
+<?php
+// views/header.php
+?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Простой магазин</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Интернет-магазин - MVC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { padding: 20px; background-color: #f8f9fa; }
-        .navbar { margin-bottom: 30px; }
-        .card { margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        body {
+            padding-top: 20px;
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            margin-bottom: 30px;
+        }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="index.php">🛍️ Простой магазин</a>
-            <div class="navbar-nav">
-                <a class="nav-link" href="index.php?page=products">📦 Товары</a>
-                <a class="nav-link" href="index.php?page=customers">👥 Покупатели</a>
-                <a class="nav-link" href="index.php?page=orders">🛒 Заказы</a>
+            <a class="navbar-brand" href="?page=products">🛒 Интернет-магазин</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo (!isset($_GET['page']) || $_GET['page'] == 'products') ? 'active' : ''; ?>" 
+                           href="?page=products">📦 Товары</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo (isset($_GET['page']) && $_GET['page'] == 'customers') ? 'active' : ''; ?>" 
+                           href="?page=customers">👥 Покупатели</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo (isset($_GET['page']) && $_GET['page'] == 'orders') ? 'active' : ''; ?>" 
+                           href="?page=orders">📋 Заказы</a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
