@@ -1,0 +1,105 @@
+<?php
+$auth = new class {
+    public function isLoggedIn() { return Auth::isLoggedIn(); }
+    public function isAdmin() { return Auth::isAdmin(); }
+    public function getCurrentUsername() { return Auth::getCurrentUsername(); }
+};
+?>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Shop - Работа с сессиями</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .navbar { background-color: #2c3e50; color: white; padding: 1rem 0; margin-bottom: 2rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .navbar h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+        .navbar h1 a { color: white; text-decoration: none; }
+        .navbar h1 a:hover { color: #3498db; }
+        .navbar nav ul { display: flex; flex-wrap: wrap; list-style: none; gap: 1.5rem; align-items: center; }
+        .navbar a { color: white; text-decoration: none; transition: color 0.3s; }
+        .navbar a:hover { color: #3498db; }
+        .user-info { display: flex; align-items: center; gap: 0.5rem; }
+        .badge { background-color: #e74c3c; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; }
+        .btn-logout { background-color: #e74c3c; padding: 0.5rem 1rem; border-radius: 4px; transition: background-color 0.3s; }
+        .btn-logout:hover { background-color: #c0392b; }
+        .page-content { background-color: white; padding: 2rem; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .page-content h2 { margin-bottom: 1.5rem; color: #2c3e50; }
+        .form-container { background-color: white; padding: 2rem; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; }
+        .form-container h2 { margin-bottom: 1.5rem; color: #2c3e50; }
+        .form { display: flex; flex-direction: column; gap: 1.5rem; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 0.5rem; font-weight: 600; color: #2c3e50; }
+        .form-group input, .form-group textarea, .form-group select { padding: 0.75rem; border: 1px solid #bdc3c7; border-radius: 4px; font-size: 1rem; font-family: inherit; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1); }
+        .form-group textarea { resize: vertical; }
+        .form-actions { display: flex; gap: 1rem; }
+        .table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; background-color: white; }
+        .table thead { background-color: #34495e; color: white; }
+        .table th { padding: 1rem; text-align: left; font-weight: 600; }
+        .table td { padding: 1rem; border-bottom: 1px solid #ecf0f1; }
+        .table tbody tr:hover { background-color: #f8f9fa; }
+        .actions { display: flex; gap: 0.5rem; }
+        .btn { display: inline-block; padding: 0.75rem 1.5rem; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; text-decoration: none; transition: all 0.3s; text-align: center; }
+        .btn-primary { background-color: #3498db; color: white; }
+        .btn-primary:hover { background-color: #2980b9; }
+        .btn-success { background-color: #27ae60; color: white; }
+        .btn-success:hover { background-color: #229954; }
+        .btn-info { background-color: #3498db; color: white; }
+        .btn-info:hover { background-color: #2980b9; }
+        .btn-danger { background-color: #e74c3c; color: white; }
+        .btn-danger:hover { background-color: #c0392b; }
+        .btn-secondary { background-color: #95a5a6; color: white; }
+        .btn-secondary:hover { background-color: #7f8c8d; }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.9rem; }
+        .action-buttons { margin-bottom: 1.5rem; display: flex; gap: 1rem; }
+        .alert { padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem; }
+        .alert-error { background-color: #fadbd8; color: #78281f; border: 1px solid #f5b7b1; }
+        .alert-info { background-color: #d6eaf8; color: #0b3861; border: 1px solid #aed6f1; }
+        .alert-success { background-color: #d5f4e6; color: #0b5345; border: 1px solid #a9dfbf; }
+        .alert-container { display: flex; justify-content: center; padding: 2rem 0; }
+        .alert h2 { margin-top: 0; }
+        .alert p { margin-bottom: 1rem; }
+        .demo-info { background-color: #ecf0f1; padding: 1rem; border-radius: 4px; margin-top: 2rem; border-left: 4px solid #3498db; }
+        .demo-info h3 { margin-top: 0; color: #2c3e50; }
+        .demo-info ul { list-style-position: inside; color: #34495e; }
+        .footer { background-color: #2c3e50; color: white; text-align: center; padding: 2rem 0; margin-top: 2rem; }
+        .footer p { margin: 0; }
+        @media (max-width: 768px) {
+            .navbar nav ul { flex-direction: column; gap: 1rem; }
+            .actions { flex-direction: column; }
+            .form-actions { flex-direction: column; }
+            .table { font-size: 0.9rem; }
+            .table th, .table td { padding: 0.5rem; }
+            .btn { padding: 0.5rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div class="container">
+            <h1><a href="/lab7/index.php?controller=home&action=index">Simple Shop</a></h1>
+            <nav>
+                <ul>
+                    <li><a href="/lab7/index.php?controller=product&action=index">Товары</a></li>
+                    <?php if ($auth->isLoggedIn()): ?>
+                        <li><a href="/lab7/index.php?controller=order&action=index">Заказы</a></li>
+                        <li class="user-info">
+                            Привет, <?php echo htmlspecialchars($auth->getCurrentUsername()); ?>
+                            <?php if ($auth->isAdmin()): ?>
+                                <span class="badge">Администратор</span>
+                            <?php endif; ?>
+                        </li>
+                        <li><a href="/lab7/index.php?controller=auth&action=logout" class="btn-logout">Выход</a></li>
+                    <?php else: ?>
+                        <li><a href="/lab7/index.php?controller=auth&action=login">Вход</a></li>
+                        <li><a href="/lab7/index.php?controller=auth&action=register">Регистрация</a></li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="container">
